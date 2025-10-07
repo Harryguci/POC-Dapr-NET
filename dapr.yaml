@@ -1,0 +1,14 @@
+apps:
+- appDirPath: FintechDemo
+  appID: fintechdemo
+  appPort: 5249
+  command:
+  - dotnet
+  - run
+- appDirPath: StockModule
+  appID: stockmodule
+  appPort: 5128
+  command:
+  - dotnet
+  - run
+version: 1
