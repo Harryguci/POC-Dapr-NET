@@ -1,5 +1,7 @@
 ﻿using Dapr.Client;
 using Microsoft.AspNetCore.Mvc;
+using StockProtos;
+using System.Net.Sockets;
 
 namespace FintechDemo.Controllers
 {
@@ -20,18 +22,24 @@ namespace FintechDemo.Controllers
         {
             return Content("Running...");
         }
-
+        
         [HttpPost]
         public async Task<IActionResult> StockUpdate([FromBody] StockUpdateRequest data)
         {
-            await _daprClient.PublishEventAsync("pubsub", "stock-updates", data);
-            Console.WriteLine($"Published: {data.ToString()}");
-            return Ok(new { data });
+            _logger.LogInformation($"Invoking stock service with: {data}");
+            
+            try
+            {
+                // Try HTTP endpoint first
+                var response = await _daprClient.InvokeMethodAsync<StockUpdateRequest, StockUpdateResponse>("stockmodule", "api/stocks/UpdateStock", data);
+                _logger.LogInformation($"Service responded: {response.Message}");
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error invoking service: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
-    }
-
-    public class StockUpdateRequest {
-        public required string Symbol { get; set; }
-        public double Price { get; set; }
     }
 }

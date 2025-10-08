@@ -1,9 +1,10 @@
 using Dapr.Client;
+using StockModule.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddGrpc();
 builder.Services.AddControllers().AddDapr();
 builder.Services.AddDaprClient();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -25,6 +26,7 @@ app.UseAuthorization();
 
 app.UseCloudEvents();
 app.MapControllers();
+app.MapGrpcService<StockGrpcService>();
 app.MapSubscribeHandler();
 
 app.Run();

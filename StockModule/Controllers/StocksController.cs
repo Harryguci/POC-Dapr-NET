@@ -1,6 +1,7 @@
 ﻿using Dapr;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using StockProtos;
 
 namespace StockModule.Controllers
 {
@@ -8,7 +9,7 @@ namespace StockModule.Controllers
     [Route("api/[controller]")]
     public class StocksController : ControllerBase
     {
-        private static (string, double)[] Stocks = new[] {
+        public static (string, double)[] Stocks = new[] {
             ("MSFT", 280.98),
             ("AAPL", 145.32),
             ("GOOGL", 2729.25),
@@ -36,17 +37,15 @@ namespace StockModule.Controllers
             return Ok(res);
         }
 
-        [Topic("pubsub", "stock-updates")]
-        [HttpPost("updates")]
-        public IActionResult ReceiveStockUpdate([FromBody] StockUpdate stockUpdate)
+        [HttpPost("UpdateStock")]
+        public ActionResult<StockUpdateResponse> UpdateStock([FromBody] StockUpdateRequest request)
         {
-            _logger.LogInformation($"Received stock update: {stockUpdate}");
-            
-            // Find the index of the stock to update
+            _logger.LogInformation($"Received stock update via HTTP: {request.Symbol} - {request.Price}");
+
             var stockIndex = -1;
             for (int i = 0; i < Stocks.Length; i++)
             {
-                if (Stocks[i].Item1 == stockUpdate.Symbol)
+                if (Stocks[i].Item1 == request.Symbol)
                 {
                     stockIndex = i;
                     break;
@@ -55,19 +54,18 @@ namespace StockModule.Controllers
 
             if (stockIndex == -1)
             {
-                _logger.LogWarning($"Stock {stockUpdate.Symbol} not found.");
-                return NotFound();
+                _logger.LogWarning($"Stock {request.Symbol} not found.");
+                return Ok(new StockUpdateResponse { Success = false, Message = $"Stock {request.Symbol} not found." });
             }
 
-            // Update the stock price in the array
-            Stocks[stockIndex] = (stockUpdate.Symbol, stockUpdate.Price);
-            _logger.LogInformation($"Updated stock {stockUpdate.Symbol} price to {stockUpdate.Price}");
+            Stocks[stockIndex] = (request.Symbol, request.Price);
+            _logger.LogInformation($"Updated stock {request.Symbol} price to {request.Price}");
 
-            return Ok();
+            return Ok(new StockUpdateResponse { Success = true, Message = "Stock updated successfully." });
         }
     }
-
-    public class StockDto {
+    public class StockDto
+    {
         public required string Symbol { get; set; }
         public double Price { get; set; }
     }

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option csharp_namespace = "StockProtos";
+
+package stocks;
+
+// The stock service definition.
+service StockService {
+  // Sends a stock update
+  rpc UpdateStock (StockUpdateRequest) returns (StockUpdateResponse);
+}
+
+// The request message containing the stock details.
+message StockUpdateRequest {
+  string symbol = 1;
+  double price = 2;
+}
+
+// The response message confirming the update.
+message StockUpdateResponse {
+    bool success = 1;
+    string message = 2;
+}
